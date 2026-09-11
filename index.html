@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taktikatasandi kordamine</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --accent: #38bdf8;
+    --green: #22c55e;
+    --red: #ef4444;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: linear-gradient(160deg, #0f172a, #1e293b);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .app { width: 100%; max-width: 640px; }
+  h1 { font-size: 1.3rem; text-align: center; margin: 0 0 4px 0; color: var(--accent); }
+  .subtitle { text-align: center; color: var(--muted); font-size: 0.9rem; margin-bottom: 20px; }
+
+  /* Deck selector */
+  .deck-list { display: flex; flex-direction: column; gap: 14px; }
+  .deck-card {
+    background: var(--card); border-radius: 16px; padding: 22px; cursor: pointer;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.28); border: 2px solid transparent;
+    transition: transform 0.12s ease, border-color 0.15s ease;
+  }
+  .deck-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .deck-card h2 { margin: 0 0 6px 0; font-size: 1.15rem; color: var(--text); }
+  .deck-card p { margin: 0; color: var(--muted); font-size: 0.88rem; }
+  .deck-card .arrow { float: right; color: var(--accent); font-size: 1.3rem; }
+
+  .stats {
+    display: flex; justify-content: space-between; background: var(--card);
+    border-radius: 14px; padding: 14px 18px; margin-bottom: 16px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25); flex-wrap: wrap; gap: 8px;
+  }
+  .stat { text-align: center; flex: 1; min-width: 70px; }
+  .stat .num { font-size: 1.3rem; font-weight: 700; display: block; }
+  .stat .label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .stat.correct .num { color: var(--green); }
+  .stat.wrong .num { color: var(--red); }
+  .progress-bar { height: 6px; background: #334155; border-radius: 3px; overflow: hidden; margin-bottom: 20px; }
+  .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s ease; }
+  .card {
+    background: var(--card); border-radius: 18px; padding: 26px 22px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3); min-height: 240px; display: flex; flex-direction: column;
+  }
+  .q-number { color: var(--muted); font-size: 0.85rem; margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center; }
+  .q-badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 8px; text-transform: uppercase; letter-spacing: .03em; }
+  .q-badge.ok { background: rgba(34,197,94,0.15); color: var(--green); }
+  .q-badge.no { background: rgba(239,68,68,0.15); color: var(--red); }
+  .question { font-size: 1.15rem; line-height: 1.5; font-weight: 600; flex-grow: 1; }
+  .answer-box {
+    margin-top: 16px; padding: 14px 16px; border-radius: 12px; background: #0f172a;
+    border-left: 4px solid var(--accent); font-size: 0.98rem; line-height: 1.5; display: none;
+  }
+  .answer-box.visible { display: block; animation: fadeIn 0.25s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+  .answer-label { color: var(--accent); font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .buttons { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+  button {
+    border: none; border-radius: 12px; padding: 12px 16px; font-size: 0.95rem; font-weight: 600;
+    cursor: pointer; transition: transform 0.1s ease, opacity 0.15s ease; flex: 1; min-width: 120px;
+  }
+  button:active { transform: scale(0.97); }
+  .btn-show { background: var(--accent); color: #04121e; }
+  .btn-correct { background: var(--green); color: #04210c; }
+  .btn-wrong { background: var(--red); color: #2b0505; }
+  .btn-nav { background: #334155; color: var(--text); flex: 0 0 auto; min-width: 90px; }
+  button:disabled { opacity: 0.35; cursor: not-allowed; }
+  .hidden { display: none !important; }
+  .end-screen { text-align: center; padding: 20px 0; }
+  .end-screen .big-pct { font-size: 2.6rem; font-weight: 800; color: var(--accent); margin: 10px 0; }
+  .footer-buttons { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+  .footer-buttons button { background: var(--accent); color: #04121e; }
+  .toolbar { display: flex; justify-content: space-between; margin-top: 12px; font-size: 0.82rem; color: var(--muted); flex-wrap: wrap; gap: 8px; }
+  .toolbar span { cursor: pointer; text-decoration: underline; }
+  .nav-row { display: flex; gap: 10px; margin-top: 12px; }
+  .back-link { display: inline-block; margin-bottom: 12px; color: var(--muted); cursor: pointer; font-size: 0.85rem; text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <!-- content injected by JS -->
+</div>
+
+<script>
+const DECKS = {"moisted": {"title": "Mõisted", "subtitle": "149 kordamisküsimust", "data": [{"q": "Akustilise luure teave", "a": "Akustiliste luureandmete kogumisel ja töötlemisel saadud luureteave (Militerm, 2022). Märkus: ACINT termin tähistab ka vastava info kogumisega seotud luuretegevust, lisaks tähistab ka luurega tegelevat organisatsiooni."}, {"q": "Analüüs", "a": "luuretsükli töötlemisfaasis etapp, mille käigus tehakse kindlaks tõlgendamist vajavad faktid (Militerm, 2023)."}, {"q": "Andurluure teave", "a": "luureteave, mis on saadud anduritelt kogutud andmete teaduslikul ja tehnoloogilisel analüüsimisel ning mille eesmärk on tuvastada allika, emitteri või saatja erijooni ja hõlbustada seeläbi nende mõõtmist ja tuvastamist (Militerm, 2021). Märkus: MASINT termin tähistab ka vastava info kogumisega seotud luuretegevust, lisaks tähistab ka luurega tegelevat organisatsiooni."}, {"q": "Avastamine", "a": "võimaliku sõjalise tähtsusega isiku, objekti või nähtuse kohalolu märkamine mis tahes vahenditega (Militerm, 2023)."}, {"q": "Diversioon", "a": "rünnak, häire või petterünnak, mis juhib tähelepanu mujale (Militerm, 2023)."}, {"q": "Doktriin", "a": "kogum põhimõtteid, millest relvajõud oma tegevuses juhinduvad, et saavutada püstitatud eesmärk (Militerm, 2023)."}, {"q": "Doktriinijärgne mudel", "a": "mudel, mis esitab vastasüksuse koosseisu lahingueeskirjapärase rakendamise jaotuse ja paigutuse koos allüksusevaheliste distantside või ajamääradega ideaaltingimustes (Militerm, 2021)."}, {"q": "Eelhoiatav luureteave / luurealane eelhoiatus", "a": "ajatundlik, võimalikke tulevikuarenguid prognoosiv luureteave, mille eesmärk on ette hoiatada riigi ja/või tema koostööpartnerite huvide vastu suunatud vaenulikust tegevusest või kavatsustest (Militerm, 2021)."}, {"q": "Elektrooniline segamine", "a": "sihilik elektromagnetilise energia kiirgamine, tagasikiirgamine või peegeldamine eesmärgiga nõrgendada vastase elektroonilisi seadmeid, varustust või süsteemide efektiivsust (Militerm, 2023)."}, {"q": "Elektroonilise luure teave", "a": "luureteave, mida hangitakse elektromagnetspektrist ja mis ei ole mõeldud sidepidamiseks (Militerm, 2021). Märkus: ELINT termin tähistab ka vastava info kogumisega seotud luuretegevust, lisaks tähistab ka luurega tegelevat organisatsiooni."}, {"q": "Elektroonilise sõjapidamise toetamise meetmed", "a": "osa elektroonilisest sõjapidamisest, mis hõlmab meetmeid elektromagnetilise kiirguse otsimiseks, tabamiseks ja tuvastamiseks ning nende allikate asukoha kindlakstegemiseks, et ohtu viivitamata kindlaks teha. See on informatsiooniallikas, mida on vaja elektrooniliste vastu- ja kaitseabinõude ning muude taktikaliste meetmetega seotud kiirete otsuste tegemiseks (Militerm, 2023)."}, {"q": "Elektroonilised kaitsemeetmed", "a": "osa elektroonilisest sõjapidamisest, mis hõlmab samme, astutud tagamaks omade elektromagnetilise spektrumi efektiivset kasutamist vaatamata vastase elektromagnetilise energia kasutamisele. Leidub kaks elektrooniliste kaitsemeetmete alajaotust: aktiivsed elektroonilised kaitsemeetmed ja passiivsed elektroonilised kaitsemeetmed. (Militerm, 2005)"}, {"q": "Elektroonilised vastumeetmed", "a": "meetmed, mille puhul elektromagnetenergiat kasutades takistatakse vastasel elektromagnetspektri tõhusat kasutamist või vähendatakse selle kasutamise tõhusust. Elektroonilised vastumeetmed jagunevad kolmeks: elektrooniline segamine, elektrooniline pete ja elektrooniline kahjutukstegemine. (Militerm, 2024)"}, {"q": "Erioperatsioon", "a": "spetsiaalselt määratud, organiseeritud, väljavalitud ja -õpetatud ning varustatud üksuste sõjaline tegevus, milles kasutatakse ebaharilikke võtteid ja tegevusi (Militerm, 2023)"}, {"q": "Erireke", "a": "vaenulikes, salatud või diplomaatiliselt ja/või poliitiliselt tundlikes keskkondades erioperatsioonidena ellu viidavad rekkeja seiretegevused, mille eesmärk on koguda või kinnitada strateegia- või operatsioonitasandi infot, rakendades selleks tavaüksustele mitteomaseid sõjalisi võimeid (Militerm, 2021)."}, {"q": "Erireke ja -seire", "a": "eriüksuste rekke- ja seiretegevus strateegia- ja operatsioonitasandi info hankimisel, et täiendada sõjatandri luurevahendeid ja -süsteeme. Erireke ja -seire on inimluureoperatsioonid, mida sooritatakse tavaoperatsioonide toetuseks või neist sõltumatult, kasutades eritehnikat, -varustust, -meetodeid või koosseisulisi vahendeid. (Militerm, 2021)"}, {"q": "Esmaoluline luureteabenõue", "a": "luureteabenõue, mille ülem on määranud planeerimis- ja otsustusprotsessis tähtsaimaks ning mis hõlmab üldjuhul ülesande täitmisega seotud võimaluste ja ohtude tuvastamist ja jälgimist (Militerm, 2024)."}, {"q": "Elektrooniline sõjapidamine", "a": "sõjaline tegevus, mis hõlmab elektromagnet- (sh suunatud ) energia kasutamist ründe- ja kaitseefektide ning olukorrateadlikkuse saavutamiseks (Militerm, 2023)."}, {"q": "Füüsiline julgeolek", "a": "julgeoleku osa, mis on seotud füüsiliste meetmetega personali julgestamiseks, varustusele, rajatistele, materjalile, dokumentidele ja teabele loata juurdepääsu takistamiseks ning nende kaitsmiseks spionaaži, sabotaaži, terrorismi, kahjustamise ja varguse vastu (Militerm, 2023)."}, {"q": "Georuumiline luureteave", "a": "georuumilise info (sh kujutised) ja muude luureandmete lõimimisel saadav luureteave, mis kirjeldab, hindab ja kujutab visuaalselt geograafiliste orientiiridega tegevusi ja füüsilise keskkonna omadusi (Militerm, 2021)."}, {"q": "Haakimine", "a": "sõbralike maaväeüksuste lahinguside loomine vastase kontrollitaval alal (Militerm, 2023)."}, {"q": "Hindamine", "a": "luuretsüklis infotöötlusetapp, mille käigus analüüsitakse luureandmeid lähutvalt allika usaldusväärsusest ning info usutavusest, asjakohasusest ja täpsusest (Militerm, 2023)."}, {"q": "Hinnangu andmine", "a": "organisatsioonide, üksikisikute, sõjaväevarustuse või süsteemide võimete ja jõudluse hindamine (Militerm, 2021)."}, {"q": "Huviala", "a": "lahingutegevuse eesmärkide saavutamisega seotud ala, millel toimuva kohta vajab vastutav ülem informatsiooni (Militerm, 2021)."}, {"q": "Häirimine", "a": "korduv tahtlik hirmutamine, mille eesmärk on vastase vägede heidutamine, takistamine ja segamine (Militerm, 2022). Märkus: Häirimiseks loetakse korduvad, kaalutletud ja hirmutavad tegevused, mille eesmärk on vastase heidutamine, tema tegevuse takistamine ja/või segamine. Heidutavat tuld teostatakse korrapäratutel ajahetkedel ja kohtades ning vähendatud relvasüsteemidega."}, {"q": "Info kõrvutamine", "a": "luuretsükli töötlemisfaasi etapp, mille käigus sorteeritakse luureandmeid, et saada ülevaade toimunust ning hõlbustada edasist infotöötlust (Militerm, 2023)."}, {"q": "Inimluure", "a": "luureteave, mida koguvad inimesed ja peamiselt inimestelt (Militerm, 2021). Märkus: Inimluure HUMINT termin tähistab ka vastava info kogumisega seotud luuretegevust, lisaks tähistab ka luurega tegelevat organisatsiooni."}, {"q": "Jaotamine", "a": "luuretsükli neljas faas, mis hõlmab luureteabe õigeaegset edasitoimetamist määratud adressaatidele asjakohases vormis ja sobival viisil (Militerm, 2023)."}, {"q": "Julgeolek", "a": "seisund, mille puhul määratud teave, varustus, isikud, tegevus ja rajatised on kaitstud spionaaži, sabotaaži, õõnestustegevuse, terrorismi ja kahjustamise, samuti kaotsimineku või loata avalikustamise eest (Militerm, 2023)."}, {"q": "Julgeolekuluure teave", "a": "luureteave spionaaži, sabotaaži, õõnestustegevuse, terrorismi või organiseeritud kuritegevusega tegelevate või tegelda võivate vaenulike organisatsioonide või isikute identiteedi, võimete ja kavatsuste kohta (Militerm, 2021). Märkus: Julgeolekuluure termin tähistab ka vastava info kogumisega seotud luuretegevust, lisaks tähistab ka luurega tegelevat organisatsiooni."}, {"q": "Julgestama", "a": "võtma jõuga või ilma oma valdusse lahingutegevuses mingit positsiooni või maastikuobjekti ja paigutama vägesid nii, et nii palju kui võimalik takistada selle hävitamist või kaotamist vaenlasele (Militerm, 2021)."}, {"q": "Jälgima", "a": "vastast vaatlema, tuvastama ohte ja neist oma üksuse põhijõule ette kandma (Militerm, 2023). Märkus: Võideldakse ainult enesekaitseks."}, {"q": "Jälgima", "a": "liikuva objekti järjestikusi positsioone kuvama või salvestama (Militerm, 2023)."}, {"q": "Järeldus", "a": "Soovitus tegevuseks, mis tuleneb olukorra analüüsist."}, {"q": "Kate", "a": "Looduslik või tehislik vari või kaitse (Militerm, 2023). Füüsiline kaitse otse- ja kaudtule eest kraavid, künkad, hooned, lahingpositsioonid, tihe mets, otsetulerelvade eest varjatud alad, jne."}, {"q": "Kate", "a": "Meetmed, mis on vajalikud inimeste, plaani, operatsiooni, rivi või rajatise kaitsmiseks vaenlase luuretegevuse ja infolekke eest (Militerm, 2023)."}, {"q": "Katteüksuste ala", "a": "ala, mis on lahinguvälja eesliinist eespool ja ulatub kuni algselt kattevägedele määratud ettenihutatud positsioon (Militerm, 2005)."}, {"q": "Keelav piirang", "a": "operatsioonide plaanimisel kõrgemalt ülemalt alluvatele ülematele esitatud nõue, mis keelab mingi tegevuse, piirates sellega tegevusvabadust (Militerm, 2023)."}, {"q": "Kohustav piirang", "a": "operatsioonide plaanimisel kõrgemalt ülemalt alluvatele ülematele esitatud nõue, mis kirjutab ette mingi tegevuse, piirates sellega tegevusvabadust (Militerm, 2005)."}, {"q": "Kriis", "a": "tasakaalu lõhkumine ühes või mitmes riigis nii, et see loob pingeid ja võib viia tõsiste rahutuste või konfliktini (Militerm, 2023). Märkus: soovimatu olukord, mis jääb väljapoole tavaolukorda. Tavaolukorra määratlemine on poliitiline otsus."}, {"q": "Kriitiline haavatavus", "a": "üliolulise nõude osa, mis on puudu(lik) või haavatav otsese või kaudse rünnaku tõttu, millel on otsustav või oluline mõju (Militerm, 2021)."}, {"q": "Kriminalistika ja biomeetria luureteave", "a": "luureteave, mis on saadud, kasutades erinevaid teaduslikke meetodeid ja tehnilisi vahendeid (Militerm, 2021). Kriminalistika luureteave - luureteave, mille aluseks on erinevate teaduslike meetodite ja tehniliste vahenditega analüüsitud andmed, mille eesmärk on sündmuste, paikade, esemete ja isikute omaduste ning nende seoste tuvastamine lähtuvalt tõendusstandardist. Biomeetria luureteave - luureteave huvipakkuvate isikute kohta, mis põhineb bioloogilistel isikuandmetel (nt sõrmejäljed ja DNA) jm luureteabel."}, {"q": "Kujutisluure / piltluure", "a": "luureteave, mille aluseks on foto-, radar-, infrapuna-, elektro-optiliste, termo- ja multispektersensoritega kogutud kujutised (nt satelliit- ja aerofotod), et täiendada muudest allikatest saadud luureteavet (Militerm, 2021). Märkus: IMINT termin tähistab ka vastava info kogumisega seotud luuretegevust, lisaks tähistab ka luurega tegelevat organisatsiooni."}, {"q": "Kõrge tasuvusega sihtmärk", "a": "vastase sihtmärk, mille hävitamine toetab märkimisväärselt oma- ja/või liitlasüksuste eesmärkide saavutamist (Militerm, 2023)."}, {"q": "Kõrge väärtusega sihtmärk", "a": "vastase sihtmärk, mida vastasüksused vajavad ülesande täitmiseks (Militerm, 2022)."}, {"q": "Ühendfunktsioonid / lahingufunktsioonid", "a": "analüüsivahend, mis võimaldab ülemal ja staabil visualiseerida jõudude tegevusi ning tagada, et arvestataks operatsiooni kõiki aspekte (Militerm, 2023). Ühendfunktsioonid on juhtimine, luure, tulejõud, liikumine ja manööver, infotegevused, jätkusuutlikkuse tagamine, kaitstus ja tsiviil-militaarkoostöö. Lahingufunktsioonideks on juhtimine, luure, tulejõud, manööver, kaitstus ja lahinguteenindus. Märkus: Dokumendiga ATP 3.2.1 on loobutud terminist \"combat functions\", selle asemel kõneldakse ka taktikatasandil terminist \"joint functions\". Kuna eesti keeles on \"lahingufunktsioon\" väga juurdunud, soovitab töörühm kasutada eesti keeles vastena terminit \"lahingufunktsioon\"."}, {"q": "Lahingukahjustuste hindamine", "a": "sõjalise ründeobjekti vastase sõjalise tegevuse (surmavate või mittesurmavate) tulemuste hindamine (Militerm, 2005)."}, {"q": "Lahingukord", "a": "sõjalise jõu isikkoosseisu, üksuste ja varustuse kindlaksmääramine, suurus, juhtimisstruktuur ja paigutus (Militerm, 2023)."}, {"q": "Lahinguruum", "a": "mitmemõõtmeline keskkond, tegurid ja tingimused, millega on vaja arvestada, et kasutada lahingujõudu, kaitsta vägesid või põhiülesanne edukalt lõpule viia (Militerm, 2023)."}, {"q": "Lahinguruumi luureettevalmistus", "a": "kindlas geograafilises piirkonnas ohu- ja tegevuskeskkonna kavakindel ja pidev analüüsimine (Militerm, 2024)."}, {"q": "Lahinguvõime", "a": "kogu hävitav ja/või häiriv jõud, mida üksus/formeering saab mingil ajahetkel ülesande täitmiseks kasutada (Militerm, 2023)."}, {"q": "Lahinguvõime võrdlus", "a": "Vastasjõudude analüüsimise meetod, milles hinnatakse vastasjõudude lahingufunktsioonide väärtusi operatsioonialal, et teha järeldusi oma üksuse tõhusaks rakendamiseks. Lahinguvõimsust rakendatakse lahingu baasfunktsioonide täitmiseks."}, {"q": "Lahinguvälja seire", "a": "lahinguala süstemaatiline vaatlemine eesmärgiga anda õigeaegselt informatsiooni ja taktikatasandi luureteavet (Militerm, 2021)."}, {"q": "Leidma", "a": "Operatsioonitasandil: vaenlast asukohastama, tuvastama ning tema kavatsusi hindama. Taktikatasandil: avastama ja tuvastama vastast ning teavitama tema tegevusest (Militerm, 2005)."}, {"q": "Luure baasteave", "a": "luureteave, mida saab kasutada võrdlus- või taustamaterjalina planeerimisel ja informatsiooni töötlemisel või siis luureteabe käitlemisel (Militerm, 2021)."}, {"q": "Luure hetkepilt", "a": "ajakohane ja visualiseeritud luureinfo hetkeseis (Militerm, 2022)."}, {"q": "Luure, seire ja reke", "a": "luureterminoloogias operatsioonitasandi ja luuretegevusi ühendav lahingufunktsioon, mis hõlmab sensorite, ressursside ning luuretsükli süsteemide planeerimist ja tegevusi, et pakkuda vahetut toetust käimasolevatele ja kavandatavatele operatsioonidele (Militerm, 2021)."}, {"q": "Luure, seire, sihtmärgi kinnistamine ja reke", "a": "õigeaegse, täpse, asjakohase ja kontrollitud info kooskõlastatud hankimine, töötlemine ja laialijagamine, millega toetatakse operatsioonide plaanimist ja elluviimist, sihtmärkide määramist ja eri mõjude arvestamist ning mis võimaldab ülematel saavutada eesmärki kogu konfliktispektri ulatuses (Militerm, 2021)."}, {"q": "Luureandmed", "a": "faktid ja statistika, mis on kogutud taustainfo või analüüsi eesmärgil ning mille töötlemise tulemusel saadakse luureteave (Militerm, 2023)."}, {"q": "Luureandmete kogumine", "a": "luuretsükli etapp, mis hõlmab andmehanget ja saadud info toimetamist pädevatele töötlejatele luureteabe tootmiseks (Militerm, 2023)."}, {"q": "Luureandmete töötlemine / töötlemine", "a": "luuretsükli kolmas faas, mille käigus muudetakse luureandmed kõrvutamise, hinnangu andmise, analüüsi, lõimimise ja tõlgendamise abil luureteabeks (Militerm, 2023)."}, {"q": "Luurehuviala", "a": "ala, mille tegurite ja arengute kohta vajab ülem luureteavet ning millel toimuv võib mõjutada operatsioonide tulemuslikkust (Militerm, 2021)."}, {"q": "Luureindikaator", "a": "luureterminoloogias info, mis viitab vastase võimalikule kavatsusele või võimele tegutseda kindlal tegevussuunal või sellest loobuda (Militerm, 2023)."}, {"q": "Luurekehand / luureagentuur", "a": "luureterminoloogias informatsiooni kogumise ja/või töötlemisega tegelev organisatsioon või üksikisik (Militerm, 2023)."}, {"q": "Luureliik / luuredistsipliin", "a": "selgelt eristatav luurevaldkond, mis hõlmab tegevuse planeerimist, infokogumist ja -töötlust ning luureteabe ettekandmist, kasutades konkreetse valdkonna tehnoloogilisi või inimressursse (Militerm, 2021)."}, {"q": "Luureoperatsioon", "a": "luureteabe kogumise ja vastuluurega seotud tegevused, mida täidavad luureorganisatsioonid (Militerm, 2021)."}, {"q": "Luureprotsessi sünkroniseerimine ning luure, seire ja vastuluure koordineerimine", "a": "Luureprotsessi sünkroniseerimine on luurenõuete ja infopäringute süsteemi haldamine (CCIRM). Selle käigus määratakse kindlaks, järjestatakse ja kooskõlastatakse luurenõuded."}, {"q": "Luureteabe hetkeseis", "a": "hetkeolukorda kajastav luureteave (Militerm, 2021)."}, {"q": "Luureteabe kokkuvõte", "a": "ülema luurevastustusala perioodiline ülevaade, mille eesmärk on ajakohastada olukorrateadlikkust ning tuua esile ettekandeperioodi olulisemad arengud (Militerm, 2021)."}, {"q": "Luureteabenõue", "a": "vastase või tegevuskeskkonna muude aspektide kohta kogutav luureteave, mida on tarvis saada ja analüüsida ülema luureteabevajaduste täitmiseks (Militerm, 2021)."}, {"q": "Luureteave", "a": "luureandmete jm info töötlemise ja analüüsi tulemus, mis on vajalik olukorrast arusaamiseks ja otsuste langetamiseks (Militerm, 2023)."}, {"q": "Luureteave avalikust allikast", "a": "luureteave, mille aluseks on nii avalikult kättesaadav kui ka muu salastamata, kuid piiratud leviku või ligipääsuga ametkondlik informatsioon (Militerm, 2023). Märkus: OSINT termin tähistab ka vastava info kogumisega seotud luuretegevust, lisaks tähistab ka luurega tegelevat organisatsiooni."}, {"q": "Luureteave keemia-, bio-, radioloogilise ja tuumarelvade kohta", "a": "keemia-, bio-, radioloogilise ning tuumamaterjali või massihävitusrelvade jt ebaseaduslike materjalide levikut puudutav luureteave, mis hõlmab nendega seotud võimeid ja võtmeisikuid, samuti paiknemist, liikumist, kohaletoimetamist, taristut ja kasutamist (Militerm, 2021)."}, {"q": "Luureteave relvajõudude kohta", "a": "teiste riikide kosmose-, maa-, mere- ja õhuväge puudutav luureteave, mis hõlmab lahingukorda, juhtimist, relvasüsteeme, väljaõpet, isikkoosseisu, doktriini, strateegiat ja taktikat, pioneerindust, logistikat, relvakaubandust, kaitsetööstust ja kaitsekulutusi (Militerm, 2021)."}, {"q": "Luuretegevus", "a": "luureteabe kogumise ja vastuluurega seotud tegevused, mida täidavad luureorganisatsioonid (Militerm, 2021)."}, {"q": "Luuretsükkel", "a": "luureterminoloogias tegevuste jada, mille käigus hangitakse ja koondatakse luureandmeid jm infot, muudetakse see luureteabeks ning tehakse kasutajatele kättesaadavaks (Militerm, 2021)"}, {"q": "Luurevastutusala", "a": "ala, mille kohta on ülemal kohustus koguda ja jagada luureteavet, kasutades kõiki olemasolevaid võimeid (Militerm, 2021)."}, {"q": "Luurevastutusala", "a": "ala, mille kohta on ülemal kohustus koguda ja jagada luureteavet, kasutades kõiki olemasolevaid võimeid (Militerm, 2021)."}, {"q": "Lõimimine", "a": "luuretsükli töötlemisfaasi aste, mille kohaselt analüüsitud info ja/või luureandmed selekteeritakse ja kombineeritakse mingiks mustriks edasiste luureandmete tootmise käigus;"}, {"q": "Lähenemistee / lähenemissuund", "a": "lennutee või maatee, mida mööda kindla suurusega ründav üksus liigub oma ründeobjektini või oma teel asuva võtmemaastikuni (Militerm, 2005)."}, {"q": "Meditsiiniluure teave", "a": "Luureteave, mille aluseks on inimeste või loomade tervisega seotud meditsiiniline, bioteaduslik, epidemioloogiline, keskkonnaalane jm info (Militerm, 2021). Märkus: tegemist on tehniliselt spetsiifilise luureteabega, mistõttu eeldab see luuretsükli suunamise ja töötlemise faasis meditsiiniliste erialateadmiste olemasolu."}, {"q": "Mereseire", "a": "Mere veepealsete ja veealuste alade süstemaatiline vaatlemine kõigi kättesaadavate ja otstarbekate vahenditega, peamiselt eesmärgiga avastada ja tuvastada maailma meredel ja ookeanidel vee peal või all liikuvaid sõbralike jõudude ja vaenlase laevu, allveelaevu ja muid veesõidukeid ning teha kindlaks nende liikumisi;"}, {"q": "Mitmeliigiline luureteave", "a": "luureteave, mis on koostatud erinevatelt luureliikidelt saadud luureandmete jm info põhjal (Militerm, 2023)."}, {"q": "Mitmeliigilise luureteabe analüüs", "a": "Kahe või enama luuredistsipliiniga kogutud luureinformatsiooni analüüs;"}, {"q": "Mõjutatav huviala", "a": "ala, kus sõbralikud üksused kavatsevad mõjutada kõrge väärtusega sihtmärke (Militerm, 2023)."}, {"q": "Oht", "a": "isikut, süsteemi või ühiskonda kahjustada võiva sündmuse võimalik põhjus, nt isik, objekt, aine (Militerm, 2023)."}, {"q": "Oletus", "a": "oletusi kasutatakse, kui on luurelüngad luureteabes. Oletus peab tuginema parimale luureteabele. Alati tuleb kindlalt väljendada nii suuliselt, kui kirjalikult, et tegemist on oletusega."}, {"q": "Olukorra teadlikkus", "a": "arusaam, mis tekib keskkonna ja sündmuste tajumisel koos ajaliste ja ruumiliste seoste, nende tähenduse ja mõju mõistmisega nii kindal ajahetkel kui ka tulevikus (Militerm, 2023)."}, {"q": "Oluline varjatav info / informatsioon", "a": "sõbralike üksuste operatsiooni üliolulised aspektid, mis vaenlasele teatavaks saamise korral kahjustaksid operatsiooni salajasust, tooksid kaasa selle ebaõnnestumise või vähendaksid edukust (Militerm, 2021)."}, {"q": "Operatsioonijulgeolek", "a": "tegevuste kogum, millega tagatakse sõjalise operatsiooni või õppuse jaoks vajalik julgeolek, kasutades passiivseid või aktiivseid vahendeid, et takistada vaenlast avastamast sõbralike vägede asukohta, suutlikkust ja kavatsusi (Militerm, 2023)."}, {"q": "Operatsioonitasandi luureteave", "a": "operatsioonitasandi kampaaniate planeerimiseks ja elluviimiseks vajalik luureteave, mis keskendub ohtude ja toimijate võimete ja kavatsuste väljaselgitamisele (Militerm, 2021)."}, {"q": "Operatsioonivõime", "a": "üksuse võime reageerida muutuvates oludes, lähtudes talle määratud ülesandest (Militerm, 2023)."}, {"q": "Otsustuspunkt", "a": "koht ajas ja ruumis, kus ülem peab otsustama üksuse edasise tegevuse üle (Militerm, 2005). Märkus: Reeglina on seotud konkreetse mõjutatud huvipiirkonnaga (TAI). Otsustuspunkti asukohad sõltuvad nii oma vägede olemasolust ja nende reaktsiooniajast kui ka vastaste eeldatavast tegevusest, nende võimetest ja liikumiskiirusest."}, {"q": "Patrull", "a": "maa-, mere- või õhuväe üksuse osa, mis saadetakse välja, et koguda informatsiooni või täita mõnd muud, hävitava, häiriva, puhastava või julgeolekualase eesmärgiga ülesannet (Militerm, 2023). Märkus: Eristatakse näiteks rekkepatrulle (luureandmete kogumine), lahingupatrulle (varitsus ja reid) ja toetuspatrulle (julgestus ja logistiline toetus)."}, {"q": "Patrull", "a": "väikeüksuste retk vastaseohtlikel aladel luureandmete kogumiseks, vastase mõjutamiseks või oma üksuse logistiliseks toetamiseks (Militerm, 2023)."}, {"q": "Purustama", "a": "vähendama vaenlase suutvust sedavõrd, et ta pole võimeline jätkama lahingutegevust või täitma seatud eesmärke (Militerm, 2024)."}, {"q": "Põhipingutus", "a": "jõudude või vahendite koondamine kindlal ajal kindlasse piirkonda, mis võimaldab ülemal otsus ellu viia (Militerm, 2023)."}, {"q": "Põhipingutusüksus", "a": "kindlaksmääratud allüksus, mille teatud kindlal ajahetkel täidetav põhiülesanne on otsustava tähendusega kogu põhiülesande edukuse tagamisel. Seda hinnatakse tavaliselt lahinguvõimsuse ülekaalu alusel (Militrm, 2023)."}, {"q": "Raskuspunkt / raskuskese", "a": "peamine jõuallikas, mis annab toimijale tema tugevuse, tegutsemisvabaduse või võitlustahte (Militerm, 2023)."}, {"q": "Reke", "a": "tegevus, mille eesmärk on vaatluse või muude avastamismeetodite abil hankida informatsiooni vaenlase või võimaliku vaenlase tegevuse ja ressursside kohta või andmeid määratud maa-ala meteoroloogiliste, hüdrograafiliste või geograafiliste näitajate kohta (Militerm, 2023). Märkus: Rekke liigid on objekti-, marsruudi- ja maa-alareke."}, {"q": "Rekkerünnak", "a": "pealetungitegevus vaenlase tugevuse avastamiseks ja/või testimiseks või muu info hankimiseks (Militerm, 2021)."}, {"q": "Risk", "a": "isikut, süsteemi või ühiskonda kahjustada võiva sündmuse võimalik põhjus, nt isik, objekt, aine (Militerm, 2020). Hõlmab kõike, mis ei ole tahtlik ja mis võib mõjutada julgeolekut. Risk (Risk) – ohu realiseerumistõenäosus ja võimalik tagajärg (Militerm, 2023). Märkus: Risk on määramatuse toime eesmärkidele, kusjuures toime on kas positiivne (soodne võimalus) või negatiivne (hälve oodatavast). Sageli iseloomustatakse riski võimalike sündmuste ja tagajärgedega või mingi sündmuse tagajärgede ja selle sündmuse võimalikkuse kombinatsiooniga."}, {"q": "Sabotaaž", "a": "tegevus või tegevusetus, mis ei ole sõjalise operatsiooni mõõtmetega ja mille eesmärk on tekitada materiaalset kahju ühele poolele selleks, et toetada vastaspoole poliitiliste või sõjaliste eesmärkide saavutamist (Militerm, 2022) Märkus: Salajane ja sihipärane kahju tekitamine vastase poolt või vastaspoole abistamiseks, eriti poliitilise või sõjalis-poliitilise õõnestustegevuse eesmärgil. Sabotaaž võib olla kollektiivne või üksikisiku tegevus (nt kodanikuallumatus). Üldkeeles on sõna tähendus põhjendamatult laienenud."}, {"q": "Seire", "a": "õhuruumi, maa- ja veepealsete või -aluste alade, paikade, isikute, esemete või kommunikatsioonivõrkude süstemaatiline vaatlemine visuaalsete, heli-, elektrooniliste, fotograafiliste või muude vahenditega (Militerm, 2023)."}, {"q": "Seiretõrje", "a": "kõik aktiivsed või passiivsed abinõud vaenuliku seiretegevuse takistamiseks (Militerm, 2021)."}, {"q": "Sideluure teave", "a": "kõne- ja andmesidesüsteemidest kogutud luureteave, mille hankija ei ole ettenähtud adressaat või kasutaja (Militerm, 2021). Märkus: Sideluure (COMINT) ja elektrooniline luure (ELINT) on signaaliluure (SIGINT) liigid."}, {"q": "Signaaliluure teave", "a": "luureteave, mille allikaks on võõras elektromagnetsignaal või -kiirgus (Militerm, 2021). Märkus: SIGINT termin tähistab ka vastava info kogumisega seotud luuretegevust, lisaks tähistab ka luurega tegelevat organisatsiooni."}, {"q": "Sihtmärgistamine", "a": "sihtmärkide ja nende vastu kasutatavate vahendite ja meetmete valimine, arvestades tegevusnõudeid ja -võimeid (Militerm, 2005). Märkus: Sihtmärgistamise eesmärk on luua otsustava tegevuse jaoks sobilikud tingimused."}, {"q": "Sihtmärgistamise luureteave", "a": "Luureteave, mis kujutab ja näitab sihtmärgi või sihtmärgigrupi komponente ning näitab selle haavatavusi ja suhtelist tähtsust."}, {"q": "Sisseviimine", "a": "vägede paigutamine vaenulikule või potentsiaalselt vaenulikule alale (Militerm, 2005)."}, {"q": "Spionaaž", "a": "luuretegevus, mis keskendub info hankimisele varjatud meetoditega ja mis on keelatud selle tegevuse objektiks oleva riigi seadustega (Militerm, 2021)."}, {"q": "Strateegiatasandi luureteave", "a": "luureteave, mis on vajalik julgeolekupoliitika kujundamiseks, sõjaliseks planeerimiseks ning suuniste andmiseks riigi- ja/või rahvusvahelisel tasandil (Militerm, 2021)."}, {"q": "Suunamine / luureandmete kogumise suunamine", "a": "luuretsükli esimene faas, mis hõlmab luureteabenõuete kindlakstegemist, luureandmete kogumise planeerimist, käskude ja päringute edastamist luureandmete kogujatele ning nende jõudluse pidevat kontrollimist (Militerm, 2022)."}, {"q": "Süntees", "a": "luuretsükli töötlemisfaasis etapp, mis hõlmab mitmest allikast või agentuurist saadud info teisendamist üheks tervikuks (Militerm, 2023). Märkus: Pärast luureinfo sünteesi ei tohi olla algupäraste allikate ja üksikasjade päritolu enam tuvastatav."}, {"q": "Süvaala", "a": "operatsiooniala osa, mis jääb oma üksuste eesjoone ja lahinguvälja eesliini vahele, aga samas võib esimene ulatuda ka üle määratud operatsiooniala piiri (Militerm, 2005)."}, {"q": "Taktikatasandi luureteave", "a": "luureteave, mis on vajalik taktikaliste operatsioonide planeerimiseks ja elluviimiseks (Militerm, 2021)."}, {"q": "Teabenõuded sõbralike jõudude kohta", "a": "info, mida ülem ja staap vajavad, et mõista sõbralike jõudude olukorda ja toetusvõimet, sh lahingutoetuse ja lahinguteeninduse ning üksuse koosseisu mittekuuluvate võimaldite kohta (Militerm, 2023)."}, {"q": "Teaduslik-tehniline luureteave", "a": "luureteave, mis puudutab teiste riikide edusamme teadus- ja arendustegevuses, sh tootmistehnikad, uued tehnoloogiad, relvasüsteemid ja nende võimed (Militerm, 2021). US DOD: Luureteave, mis hõlmab (a) teiste riikide teadus- ja arendustegevust ning uusi insener-tehnilisi rakendusi ning (b) teiste riikide sõjaväeliste süsteemide, relvade, relvasüsteemide ja varustuse teaduslikke ja tehnoloogilisi omadusi, võimeid ja piiranguid ning nendega seotud teadus- ja arendustegevust, sh tootmismeetodeid;"}, {"q": "Tehniline pealtkuulamistõrje", "a": "ala kontrollimine, et tuvastada võimalikud pealtkuulamisja muud andmeedastusseadmed;"}, {"q": "Tehnoloogialuure teave", "a": "teiste riikide tehnoloogiliste edusammude ning sõjaväevarustuse sooritusvõimet ja rakendatavust puudutav luureteave, millel on või võib tulevikus olla sõjaline kasutus (Militerm, 2021)."}, {"q": "Tempo", "a": "Lahingutegevuse kiirus või rütm (Militerm, 2005)."}, {"q": "Terrorism", "a": "inimeste või vara/omandi vastu suunatud ning hirmu külvav vägivalla ebaseaduslik kasutamine või sellega ähvardamine selleks, et survestada valitsust või ühiskonda, saavutada kontroll elanike üle ning saavutada seeläbi poliitilisi, religioosseid või ideoloogilisi eesmärke (Militerm, 2023)."}, {"q": "Tuleala", "a": "ala, mida mingi relv või relvagrupp võib teatud positsioonilt tõhusalt tulega katta (Militerm, 2005)."}, {"q": "Tulereke", "a": "rekkemeetod, mille puhul tulistatakse vaenlase arvatavat asukohta, et sundida vaenlast liikumise või vastutulistamisega oma kohalolekut paljastama (Militerm, 2021)."}, {"q": "Tuvastamine", "a": "avastatud isiku, objekti või nähtuse olemuse ja võimaluse korral ka klassi või tüübi kindlaksmääramine (Militerm, 2023)."}, {"q": "Tõke", "a": "looduslik või tehisobjekt, mis loob füüsilise takistuse või ohu masinate, elavjõu või lahingurivistuse liikumisele (Militerm, 2022)."}, {"q": "Tõlgendamine", "a": "luuretsükli töötlemisfaasi viimane etapp, mille raames hinnatakse info ja/või luureteabe tähendust olemasolevate teadmiste suhtes (Militerm, 2021)."}, {"q": "Täpsustatud luureteabenõue", "a": "esmaolulist luureteabenõuet toetav ja täpsustav küsimus, mille alusel otsustatakse selle üle, kuidas ja milliseid vahendeid kasutades täita esmaolulist luureteabenõuet (Militerm, 2021)."}, {"q": "Vaadeldav huviala", "a": "ala või valdkond, mille kohta kogutakse informatsiooni täpsustatud luureteabenõude täitmiseks (Militerm, 2021). Märkus: vaadeldav geograafiline huviala võib olla ka punkt või liin."}, {"q": "Vaadeldavus", "a": "ilma- ja maastikuolud, mis võimaldavad üksustel hinnata sõbralikke, vastas- ja neutraalseid jõude ning keskkonda (Militerm, 2023)"}, {"q": "Valvama", "a": "julgestama oma põhijõudu, asudes aja võitmiseks võitlusse, vaadeldes samal ajal vastase tegevust ja sellest ette kandes. Julgestus võitleb põhiüksuse kaudtule ulatuses. (Militerm, 2005)"}, {"q": "Varjamine", "a": "kaitse vaatluse või seire eest (Militerm, 2023). Kaitse vastase otse- või õhuvaatluse eest. Maskeering, mets, taimestik, hooned."}, {"q": "Varjatud jälgimine", "a": "isiku ja tema tegevuse jälgimine teatud ajavahemiku jooksul ilma tema teadmata (Militerm, 2023)."}, {"q": "Vastase hindamine", "a": "ohustavate jõudude võimete ja eelistatud doktriini põhimõtete ning taktika, töömeetodite ja püsitoimingute kindlakstegemine (Militerm, 2005)."}, {"q": "Vastase ohtlikem tegevusvariant", "a": "Vastase tegevusvariant, milles ta ei järgi rangelt lahingueeskirjapõhist käitumist ja kujutab sellega suuremat ohtu sõbralikele jõududele. VA ülem on valmis võtma oluliselt suurema riski edu saavutamiseks."}, {"q": "Vastase tõenäolisem tegevusvariant", "a": "Iseloomujoon vastase tegevusvariandile, milles ta järgib lahingueeskirjapärast käitumist."}, {"q": "Vastuluure", "a": "tegevus, mis on seotud spionaaži, sabotaaži, õõnestustegevuse või terrorismiga tegelevate vaenulike luureteenistuste, organisatsioonide või isikute põhjustatud julgeolekuriskide kindlakstegemise ja nende vastu võitlemisega (Militerm, 2021)."}, {"q": "Vastuluure operatsioon", "a": "tegevuste kogum, mille eesmärk on tuvastada, neutraliseerida või heidutada võõrriigi luuretegevust ning terroristlilikke kavatsusi ja tegevusi (Militerm, 2021)."}, {"q": "Võime", "a": "suutlikkus saavutada soovitud mõju või tulemust (Militerm, 2023)."}, {"q": "Võtmemaastik", "a": "paikkond või ala, mille hõivamine või hoidmine annab võitlevatest pooltest ühele suure eelise (Militerm, 2023)."}, {"q": "Väekaitse", "a": "kõik meetmed ja vahendid, mille eesmärk on minimeerida isikkoosseisu, rajatiste, varustuse ja tegevuse kahjustatavust mis tahes ohu suhtes ja olukorras, et säilitada väeüksuse tegevusvabadus ja tõhusus (Militerm, 2021)."}, {"q": "Õhureke", "a": "luureandmete kogumine visuaalse vaatluse teel õhust või õhusõidukile paigaldatud sensorite abil (Militerm, 2023)."}, {"q": "Õhuseire", "a": "õhuruumi süstemaatiline vaatlemine elektrooniliste, visuaalsete vm vahenditega, et tuvastada sõbralike jõudude ja vaenlase õhukeid ja rakette ning teha kindlaks nende liikumist vaatluse all olevas õhuruumis (Militerm, 2021)."}, {"q": "Õõnestustegevus", "a": "tegevus või tegevusetus, mille eesmärk on nõrgestada riigivõimu, vähendades ühiskonnas seaduskuulekust või kaitsetahet (Militerm, 2023). Märkus: õõnestustegevus hõlmab nt propagandat ja agitatsiooni, variorganisatsioonide kasutamist, toetajate värbamist, usaldamatuse õhkkonna tekitamist, kuulujuttude ja valeinformatsiooni levitamist."}, {"q": "Ühendluure, -seire ja -reke", "a": "operatsioonitasandi ja luure võimete kooslus, mis hõlmab nii luureandmete kogumise planeerimist ja haldamist kui ka info töötlemist ning saadud luureteabe laialijagamist, et toetada operatsioonide planeerimist, kavandamist ja elluviimist (Militerm, 2021)."}, {"q": "Ühine olukorrapilt", "a": "kasutaja vajadustele kohandatud olukorrapilt, mis põhineb ühistel andmetel ja teabel, mida jagab rohkem kui üks üksus ning mis tagab ühise olukorrateadlikkuse (Militerm, 2023)."}, {"q": "Ülema kavatsus", "a": "sõjakäigu või operatsiooni soovitud eesmärkide ja lõpptulemuse saavutamise lühikirjeldus (Militerm, 2005)."}, {"q": "Ülema üliolulise teabe nõue", "a": "teave sõbralike jõudude, vaenuliku tegevuse ja keskkonna kohta, mida ülem vajab olukorrateadlikkuse alalhoidmiseks, tegevuse planeerimiseks ning õigeaegseks otsustamiseks (Militerm, 2021)."}, {"q": "Ülioluline võime", "a": "vahend, millest sõltub raskuskeskme toime ja mis on oluline määratud või eeldatava eesmärgi täitmisel (Militerm, 2021)."}]}, "lahingutegevused": {"title": "Taktikalised lahingutegevused", "subtitle": "62 kordamisküsimust", "data": [{"q": "Mida tähendab tegevus \"ASUKOHASTAMA\" (LOCATE)?", "a": "Määratud objekti paiknemist või sündmuse toimumiskohta kindlaks tegema."}, {"q": "Mida tähendab tegevus \"EDUNDAMINE\" (EXPLOITATION)?", "a": "Pealetungitegevus, mis tavaliselt järgneb edukale rünnakule ja on mõeldud vaenlase segipaiskamiseks sügavuses."}, {"q": "Mida tähendab tegevus \"EEMALDUMA\" (RETIRE)?", "a": "Liikuma vaenlasest eemale, olemata temaga lahingukontaktis."}, {"q": "Mida tähendab tegevus \"EEMAL HOIDMA\" (INTERDICT)?", "a": "Hoidma vaenlast nii kaugel, et tema tegevusulatus ei mõjuta sõbralikke üksusi."}, {"q": "Mida tähendab tegevus \"HAARAMA\" (ENVELOP)?", "a": "Liikuma ümber või üle vaenlase kaitsepositsioonide, et julgestada ründeobjektid vaenlase tagaalal."}, {"q": "Mida tähendab tegevus \"HOIDMA\" (RETAIN)?", "a": "Säilitama oma valduses maa-ala, et vastane ei saaks seda hõivata ega kasutada."}, {"q": "Mida tähendab tegevus \"HÕIVAMA\" (OCCUPY)?", "a": "Paigutama üksust määratud maa-alale, kus pole vaenlast."}, {"q": "Mida tähendab tegevus \"HÄVITAMA\" (DESTROY)?", "a": "Kahjustama vaenlase väge või määratud objekti sedavõrd, et see oleks taastamiseta kasutamatu."}, {"q": "Mida tähendab tegevus \"JULGESTAMA\" (SECURE)?", "a": "Võtma jõuga või ilma oma valdusse lahingutegevuses mingit positsiooni või maastikuobjekti ja paigutama vägesid nii, et nii palju kui võimalik takistada selle hävitamist või kaotamist vaenlasele."}, {"q": "Mida tähendab tegevus \"VALVAMA\" (GUARD)?", "a": "Julgestama oma põhijõudu, asudes aja võitmiseks võitlusse, vaadeldes samal ajal vastase tegevust ja sellest ette kandes. Julgestus võitleb põhiüksuse kaudtule ulatuses."}, {"q": "Mida tähendab tegevus \"JÄLGIMA\" (SCREEN)?", "a": "Vastast vaatlema, tuvastama ohte ja neist oma üksuse põhijõule ette kandma."}, {"q": "Mida tähendab tegevus \"JÄLITAMA\" (PURSUE)?", "a": "Põgenevat vaenlast kinni püüdma või üksusest ära lõikama, et see siis hävitada."}, {"q": "Mida tähendab tegevus \"JÄRGNEMA JA JÄTKAMA\" (FOLLOW AND ASSUME)?", "a": "Liikuma pealetungiva üksuse järel ja olema valmis vajadusel võtma üle määratud ülesande täitmine, juhul kui eesmine üksus on seotud või ei ole muul põhjusel võimeline jätkama."}, {"q": "Mida tähendab tegevus \"JÄRGNEMA JA TOETAMA\" (FOLLOW AND SUPPORT)?", "a": "Liikuma pealetungiva eesmise üksuse järel ja teda toetama. Selle ülesandega üksus ei ole reserv, vaid on määratud ülesandega eesmise üksuse toetuseks."}, {"q": "Mida tähendab tegevus \"KANALISEERIMA\" (CANALIZE)?", "a": "Sundima vaenlast liikuma kitsale maa-alale."}, {"q": "Mida tähendab tegevus \"KARPIMA\" (CONTAIN)?", "a": "Lubama vaenlase manöövrit ainult määratud maa-alal."}, {"q": "Mida tähendab tegevus \"KATMA\" (COVER)?", "a": "Kaitsma põhiüksust kaitsetegevuse või eksitamisega, samas vaadeldes vaenlase tegevust ja sellest ette kandes. Oma tegevusega ennetatakse vaenlase rünnakut, vaatlust või kaitsele asumist."}, {"q": "Mida tähendab tegevus \"KONTROLLIMA\" (CONTROL)?", "a": "Säilitama oma mõjuvõimu määratud maa-alal, et hoida ära selle kasutamine vaenulikel eesmärkidel."}, {"q": "Mida tähendab tegevus \"LAGUNDAMA\" (DISRUPT)?", "a": "Mõjutama negatiivselt vaenuväe terviklikkust, operatsiooni tempot ja ajakava."}, {"q": "Mida tähendab tegevus \"LAHTI REBIMA\" (DISENGAGE)?", "a": "Katkestama kokkupuudet vaenlasega."}, {"q": "Mida tähendab tegevus \"LIIKUMINE KONTAKTI\" (ADVANCE TO CONTACT)?", "a": "Pealetungitegevus vaenlasega kontakti saavutamiseks või selle taastamiseks."}, {"q": "Mida tähendab tegevus \"LÄBIMURDMA\" (PENETRATE)?", "a": "Vaenlase kaitsest läbi tungima ja tema kaitsesüsteemi lagundama."}, {"q": "Mida tähendab tegevus \"LÄBIPÄÄSU RAJAMA\" (BREACH)?", "a": "Vaenlase kaitsesse, tõkkesse või kindlustusse läbikäiku tegema või seda julgestama."}, {"q": "Mida tähendab tegevus \"MAHA SURUMA\" (SUPPRESS)?", "a": "Vähendama ajutiselt vaenlase võitlusvõimet, et võimaldada oma üksuste tegevust."}, {"q": "Mida tähendab tegevus \"MÖÖDUMA\" (BYPASS)?", "a": "Liikuma ümber takistuse, positsiooni või vaenlase üksuse, et säilitada liikumishoog."}, {"q": "Mida tähendab tegevus \"NEUTRALISEERIMA\" (NEUTRALIZE)?", "a": "Muutma vaenlase üksust võitlusvõimetuks nii, et ta ei saaks ajutiselt mõjutada käimasolevat operatsiooni."}, {"q": "Mida tähendab tegevus \"PETTERÜNNAK\" (FEINT)?", "a": "Rünnata või teeselda ründamist peamisest sihtmärgist erinevale sihtmärgile eesmärgiga juhtida vaenlase kaitseüksused kõrvale oma üksuste põhipingutusest."}, {"q": "Mida tähendab tegevus \"PETTETEGEVUS\" (DECEPTION)?", "a": "Tegevuste kogum, mille eesmärk on vastast eksitada ja mõjutada teda käituma viisil, mis kahjustab tema enda huve."}, {"q": "Mida tähendab tegevus \"PUHASTAMA\" (CLEAR)?", "a": "Eemaldama kindlaksmääratud alalt kogu vastase ning organiseeritud vastupanu."}, {"q": "Mida tähendab tegevus \"PÕHIRÜNNAK\" (MAIN ATTACK)?", "a": "Peamine rünnak või pingutus, millesse ülem suunab tema käsutuses oleva pealetungijõu kogu raskuse."}, {"q": "Mida tähendab tegevus \"REID\" (RAID)?", "a": "Tavaliselt väikese ulatusega operatsioon kiireks läbimurdeks vastase territooriumile, et koguda andmeid, vaenlast segadusse viia või tema rajatisi hävitada; põhiülesande täitmisel lõpeb reid plaanikohase taandumisega."}, {"q": "Mida tähendab tegevus \"RÜNNAK\" (ATTACK)?", "a": "Pealetungitegevus, mille eesmärk on hävitada vaenlase üksused tule ja liikumise abil."}, {"q": "Mida tähendab tegevus \"RÜNNAKU SUUND\" (DIRECTION OF ATTACK)?", "a": "Omade rünnaku suund märgitakse sinisega ja vastase rünnaku suund punasega; pidevjoon tähistab rünnaku suunda ning katkendjoon planeeritud/võimalikku rünnakusuunda."}, {"q": "Mida tähendab tegevus \"RÜNNAKU SUUND – RÜNDEKOPTER\" (DIRECTION OF ATTACK – ROTARY WING)?", "a": "Rünnaku suuna tingmärk ründekopterite puhul."}, {"q": "Mida tähendab tegevus \"RÜNNAKU SUUND – LENNUKID\" (DIRECTION OF ATTACK – FIXED WING)?", "a": "Rünnaku suuna tingmärk lennukite puhul."}, {"q": "Mida tähendab tegevus \"RÜNDMA TULEGA\" (ATTACK BY FIRE)?", "a": "Andma tulelööki otse- ja kaudtulega vaenlasele lähenemata."}, {"q": "Mida tähendab tegevus \"SEISKAMA\" (BLOCK)?", "a": "Takistama vaenlase liikumist määratud maa-alale või suunas."}, {"q": "Mida tähendab tegevus \"SIDUMA\" (FIX)?", "a": "Hoidma ära vastase üksuse liikumist määratud maa-alal määratud aja vältel."}, {"q": "Mida tähendab tegevus \"SISSE IMBUMA\" (INFILTRATE)?", "a": "Liikuma vaenlase kontrollitavale maa-alale või seda läbima, jäädes märkamatuks."}, {"q": "Mida tähendab tegevus \"SUUNAMA\" (TURN)?", "a": "Sundima vaenlast muutma liikumissuunda."}, {"q": "Mida tähendab tegevus \"TAANDUMA\" (WITHDRAW)?", "a": "Vaenlasest lahti rebima ja eemalduma."}, {"q": "Mida tähendab tegevus \"TAKISTAMA\" (DENY)?", "a": "Hoidma ära määratud objekti või maa-ala kasutamist vaenlase poolt."}, {"q": "Mida tähendab tegevus \"TEESKLEMA\" (DEMONSTRATE)?", "a": "Vaenlast jõunäitamisega eksitama, temaga lahingukontakti astumata."}, {"q": "Mida tähendab tegevus \"TULEGA TOETAMA\" (SUPPORT BY FIRE)?", "a": "Vastase tulega ründamine, selleks et toetada teist manöövrit sooritavat üksust."}, {"q": "Mida tähendab tegevus \"VALLUTAMA\" (SEIZE)?", "a": "Puhastama määratud maa-ala vastase üksustest ja saavutama kontrolli selle üle."}, {"q": "Mida tähendab tegevus \"VARITSUS\" (AMBUSH)?", "a": "Pealetungitegevus, milles liikuvat või ajutiselt peatunud vaenlast rünnatakse ootamatult varjatud positsioonilt."}, {"q": "Mida tähendab tegevus \"VASTURÜNNAK\" (COUNTERATTACK)?", "a": "Kaitses oleva üksuse rünnak ründavale vaenlasele, et takistada tal rünnaku eesmärki saavutamast; kaitses võib see taastada lahingupositsiooni või saavutada piiritletud eesmärke."}, {"q": "Mida tähendab tegevus \"VIIVITAMA\" (DELAY)?", "a": "Hoidma ära vaenlase jõudmine määratud kohta kindla ajahetke või sündmuseni."}, {"q": "Mida tähendab tegevus \"VÄLJA IMBUMA\" (EXFILTRATE)?", "a": "Taanduma vaenlase kontrollitavalt maa-alalt välja, jäädes märkamatuks."}, {"q": "Mida tähendab tegevus \"VÄLJAVAHETUS\" (RELIEF IN PLACE (RIP))?", "a": "Kõrgema ülema juhtimisel asendatakse kõik või osa ühest üksusest kohalesaabuva üksusega ning vastutus ülesande ja määratud operatsiooniala eest läheb üle saabuvale üksusele."}, {"q": "Mida tähendab tegevus \"ÄRA LÕIKAMA\" (ISOLATE)?", "a": "Eraldama vaenlase üksust toetusest, et piirata tema liikumisvabadust ja takistada tema kontakti teiste vaenlase üksustega."}, {"q": "Mida tähendab tegevus \"HAAKIMA\" (LINK-UP)?", "a": "Sõbralike maaväeüksuste lahinguside loomine vastase kontrollitaval alal."}, {"q": "Mida tähendab tegevus \"HÄIRIMINE\" (HARASSMENT (HARASS))?", "a": "Korduv tahtlik hirmutamine, mille eesmärk on vastase vägede heidutamine, takistamine ja segamine."}, {"q": "Mida tähendab tegevus \"LEIDMA\" (FIND)?", "a": "Operatsioonitasandil vaenlast asukohastama, tuvastama ning tema kavatsusi hindama; taktikatasandil avastama ja tuvastama vastast ning teavitama tema tegevusest."}, {"q": "Mida tähendab tegevus \"NIHUSTAMA\" (DISLOCATE)?", "a": "Manöövri abil vastase sidususe nihutamine või häirimine üllatuse ning psühholoogilise ja/või füüsilise hoo ja ülekaalu abil."}, {"q": "Mida tähendab tegevus \"PATRULL\" (PATROL)?", "a": "Maa-, mere- või õhuväest äravõetud üksus, mis saadetakse välja informatsiooni kogumiseks või hävitava, häiriva, puhastava või julgeolekualase ülesande täitmiseks."}, {"q": "Mida tähendab tegevus \"PURUSTAMA\" (DEFEAT)?", "a": "Vähendama vaenlase suutvust sedavõrd, et ta pole võimeline jätkama lahingutegevust või täitma seatud eesmärke."}, {"q": "Mida tähendab tegevus \"REKE\" (RECCE)?", "a": "Vaatluse või muude avastamismeetodite abil informatsiooni hankimine vaenlase või võimaliku vaenlase tegevuse ja ressursside kohta või andmete hankimine määratud maa-ala meteoroloogiliste, hüdrograafiliste või geograafiliste näitajate kohta."}, {"q": "Mida tähendab tegevus \"REKKERÜNNAK\" (RECCE IN FORCE)?", "a": "Pealetungitegevus vaenlase tugevuse avastamiseks ja/või kontrollimiseks või andmete hankimiseks."}, {"q": "Mida tähendab tegevus \"SISSEVIIMINE\" (INSERTION)?", "a": "Vägede paigutamine vaenulikule või potentsiaalselt vaenulikule alale."}, {"q": "Mida tähendab tegevus \"TULEREKE\" (RECCE BY FIRE)?", "a": "Rekkemeetod, mille puhul tulistatakse vaenlase arvatavat asukohta, et sundida vaenlast liikumise või vastutulistamisega oma kohalolekut paljastama."}, {"q": "Mida tähendab tegevus \"TUVASTAMINE\" (RECOGNITION)?", "a": "Avastatud isiku, objekti või nähtuse olemuse ja võimaluse korral ka klassi või tüübi kindlaksmääramine."}]}, "akronyymid": {"title": "Akronüümid", "subtitle": "114 kordamisküsimust", "data": [{"q": "DL", "a": "otsustusjoon (DL)"}, {"q": "DP", "a": "otsustuspunkt (DP)"}, {"q": "EA", "a": "hävitusala (EA)"}, {"q": "HPT", "a": "kõrge väärtusega sihtmärk (HPT)"}, {"q": "HVT", "a": "kõrge tasuvusega sihtmärk (HVT)"}, {"q": "JV", "a": "jalavägi"}, {"q": "LA", "a": "lahinguala (AOO)"}, {"q": "LaKe", "a": "lahingukeskus (TOC)"}, {"q": "LLE", "a": "lahinguruumi luureettevalmistus (IPB)"}, {"q": "OA", "a": "operatsiooni ala (AO, AOO)"}, {"q": "OVP", "a": "otsuse vastuvõtmise protsess (MDMP)"}, {"q": "PO", "a": "pioneeriohvitser"}, {"q": "PüTo", "a": "püsitoimingud (SOP)"}, {"q": "S2AO", "a": "S2 allohvitser"}, {"q": "S2O", "a": "S2 ohvitser"}, {"q": "SIR", "a": "Täpsustatud luureteabe nõue (SIR)"}, {"q": "TBK", "a": "tuuma-bioloogia-keemia (NBC)"}, {"q": "TeVa", "a": "tegevusvariant (COA)"}, {"q": "TT", "a": "tankitõrje"}, {"q": "TTRakK", "a": "tankitõrje raketikompleks"}, {"q": "UAV", "a": "mehitamata õhusõiduk, mehitamata õhusõiduki süsteem (UAV, UAS, RPAS, RPV)"}, {"q": "V", "a": "võtmemaastik (K)"}, {"q": "VA", "a": "vastane (ENY, EN, E)"}, {"q": "VA TeVa", "a": "vastase tegevusvariant (ENY COA, EN COA, ECOA)"}, {"q": "ÕT", "a": "õhutõrje"}, {"q": "ACINT", "a": "akustiline luure"}, {"q": "AII", "a": "luurehuviala"}, {"q": "AIR", "a": "luure vastutusala"}, {"q": "ALO", "a": "õhukoostööohvitser"}, {"q": "ANNEX", "a": "lisa (käsu lisa)"}, {"q": "AOI", "a": "huviala"}, {"q": "AOO/AO", "a": "operatsiooniala/lahinguala (OA/LA)"}, {"q": "APPENDIX", "a": "alalisa"}, {"q": "ASCOPE", "a": "Ala (Area), Struktuur (Structure), Võimekused (Capabilities), Organisatsioonid (Organizations), Inimesed (People), Sündmused (Events)"}, {"q": "BAE", "a": "lahinguruumi keskkonna analüüs"}, {"q": "BDA", "a": "lahingukahjustuste hinnang"}, {"q": "C2", "a": "juhtimine"}, {"q": "C3", "a": "juhtimine ja side"}, {"q": "CCIR", "a": "ülema üliolulise teabe nõue"}, {"q": "CCIRM", "a": "Luureprotsessi sünkroniseerimine ning luure, seire ja vastuluure koordineerimine"}, {"q": "COMINT", "a": "sideluure (COMINT)"}, {"q": "COP", "a": "ühine olukorrapilt"}, {"q": "DL", "a": "otsustusjoon (DL)"}, {"q": "DP", "a": "otsustuspunkt (DP)"}, {"q": "DSO", "a": "otsustuskile (DSO)"}, {"q": "DZ", "a": "maandamisala"}, {"q": "EA", "a": "hävitusala"}, {"q": "ECOA", "a": "Vastase tegevusvariant (Va TeVa)"}, {"q": "EEFI", "a": "oluline varjatav info (EEFI)"}, {"q": "EEI", "a": "täpsustatud luureteabenõue"}, {"q": "ELINT", "a": "elektrooniline luure"}, {"q": "EN COA MD", "a": "vastase ohtlikuim tegevusvariant (VA TeVa O)"}, {"q": "EN COA ML", "a": "vastase tõenäolisem tegevusvariant (VA TeVa T)"}, {"q": "EW", "a": "elektrooniline võitlus (EV)"}, {"q": "FFIR", "a": "teabenõuded sõbralike jõudude kohta"}, {"q": "FHT", "a": "taktikaline inimallikaluure meeskond"}, {"q": "FISINT", "a": "põhiliselt telemeetria-, navigeerimis- ja juhtseadmete signaalide luure"}, {"q": "FLOT", "a": "oma üksuste eesjoon (FLOT)"}, {"q": "FRAGO", "a": "osakäsk"}, {"q": "FS", "a": "tuletoetus"}, {"q": "FSO", "a": "tuletoetusohvitser"}, {"q": "HCT", "a": "taktikaline inimallikaluure meeskond"}, {"q": "HPT", "a": "kõrge tasuvusega sihtmärk"}, {"q": "HUMINT", "a": "inimluure, inimallikaluure (HUMINT)"}, {"q": "HVT", "a": "kõrge väärtusega sihtmärk"}, {"q": "HVTL", "a": "kõrge väärtusega sihtmärkide nimekiri"}, {"q": "ICP", "a": "luureandmete kogumisplaan"}, {"q": "IDF", "a": "kaudtuli"}, {"q": "IMINT", "a": "kujutisluure / piltluure (IMINT)"}, {"q": "INTREP", "a": "luureettekanne"}, {"q": "INTSUM", "a": "luureteabe kokkuvõte"}, {"q": "IPB", "a": "lahinguruumi luureettevalmistus (LLE)"}, {"q": "IR", "a": "teabenõue, infonõue"}, {"q": "IRINT", "a": "infrapuna luure (IRINT)"}, {"q": "IRM & CM", "a": "luureteabehaldus ja luureaandmete kogumise korraldamine"}, {"q": "ISR", "a": "luure, seire, reke"}, {"q": "ISTAR", "a": "luure, seire, sihtmärgi kinnistamise ja reke"}, {"q": "LASINT", "a": "laserluure"}, {"q": "LO", "a": "läviohvitser"}, {"q": "LOC", "a": "kõik maa-, vee- ja õhuteed, mis ühendavad tegutsevaid relvajõude ühe või mitme tegevusbaasiga ja mida mööda liiguvad varustus ning tugevdusüksused"}, {"q": "LOS", "a": "vaatlusala"}, {"q": "LZ", "a": "maandumisvöönd"}, {"q": "LTIOV", "a": "viimane aeg millal teave on väärtuslik"}, {"q": "MA", "a": "põhiülesande analüüs"}, {"q": "MASINT", "a": "andurluure (MASINT)"}, {"q": "NAI", "a": "vaadeldav huviala (NAI)"}, {"q": "OBJ", "a": "objekt (OBJ)"}, {"q": "OCOKA", "a": "vaadeldavus, tulealad, kate, varjatus, tõkked, võtmemaastikud, lähenemissuunad"}, {"q": "OPORD", "a": "operatsioonikäsk, lahingukäsk"}, {"q": "ORBAT", "a": "sõjalise jõu isikkoosseisu, üksuste ja varustuse kindlaksmääramine, suurus, juhtimisstruktuur ja paigutus"}, {"q": "OSINT", "a": "luureteave avalikust allikast, luure avalikust allikast (OSINT)"}, {"q": "PIR", "a": "esmaoluline luureteabenõue;"}, {"q": "PMESII-PT", "a": "poliitiline, julgeolek, majandus, sotsiaalne, informatsioon, taristu, füüsiline keskkond ja aeg"}, {"q": "QICP", "a": "kiire luureandmete kogumisplaan"}, {"q": "RADINT", "a": "radar luure (RADINT)"}, {"q": "RECCE", "a": "reke"}, {"q": "RFI", "a": "infopäring / informatsioonipäring"}, {"q": "RPAS", "a": "Mehitamata õhusõiduki süsteem (UAS)"}, {"q": "RPV", "a": "vt UAS, UAV"}, {"q": "SIGINT", "a": "signaaliluure (SIGINT)"}, {"q": "SIR", "a": "täpsustatud luureteabenõue (SIR)"}, {"q": "SITREP", "a": "olukorra ettekanne (OLEK)"}, {"q": "SOF", "a": "erioperatsioonide väed, erioperatsioonide jõud"}, {"q": "TAC CP", "a": "eesmine juhtimispunkt (EJuPu)"}, {"q": "TAI", "a": "mõjutatav huviala (TAI)"}, {"q": "TASKORG", "a": "sihtstruktuur"}, {"q": "THT", "a": "taktikaline inimallikaluure meeskond"}, {"q": "UAS", "a": "mehitamata õhusõiduki süsteem (UAS, UAV)"}, {"q": "UAV", "a": "mehitamata õhusõiduk (UA, UAV)"}, {"q": "UGS", "a": "Mehitamata maismaa süsteem"}, {"q": "UGV", "a": "mehitamata maismaasõiduk"}, {"q": "USS", "a": "mehitamata meresüsteem"}, {"q": "USV", "a": "mehitamata meresõiduk"}, {"q": "WARNO", "a": "eelkäsk"}]}};
+
+let currentDeckKey = null;
+let order = [];
+let states = [];
+let current = 0;
+
+const app = document.getElementById('app');
+
+function renderDeckSelector() {
+  currentDeckKey = null;
+  let cardsHtml = '';
+  for (const key in DECKS) {
+    const d = DECKS[key];
+    cardsHtml += `
+      <div class="deck-card" data-key="${key}">
+        <span class="arrow">→</span>
+        <h2>${d.title}</h2>
+        <p>${d.subtitle}</p>
+      </div>
+    `;
+  }
+  app.innerHTML = `
+    <h1>Taktikatasandi kordamine</h1>
+    <div class="subtitle">Vali õppekeskkond</div>
+    <div class="deck-list" id="deckList">${cardsHtml}</div>
+  `;
+  document.querySelectorAll('.deck-card').forEach(el => {
+    el.addEventListener('click', () => startDeck(el.dataset.key));
+  });
+}
+
+function startDeck(key) {
+  currentDeckKey = key;
+  const deck = DECKS[key];
+  order = deck.data.map((_, i) => i);
+  states = order.map(() => ({ judged: false, correct: null, revealed: false }));
+  current = 0;
+  renderQuizShell();
+  renderCard();
+}
+
+function renderQuizShell() {
+  const deck = DECKS[currentDeckKey];
+  app.innerHTML = `
+    <span class="back-link" id="backLink">← Vali teine õppekeskkond</span>
+    <h1>${deck.title}</h1>
+    <div class="subtitle">${deck.subtitle}</div>
+
+    <div class="stats">
+      <div class="stat">
+        <span class="num" id="statTotal">0</span>
+        <span class="label">Kokku</span>
+      </div>
+      <div class="stat">
+        <span class="num" id="statAnswered">0</span>
+        <span class="label">Vastatud</span>
+      </div>
+      <div class="stat correct">
+        <span class="num" id="statCorrectPct">0%</span>
+        <span class="label">Õige %</span>
+      </div>
+      <div class="stat wrong">
+        <span class="num" id="statWrongPct">0%</span>
+        <span class="label">Vale %</span>
+      </div>
+    </div>
+
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+    <div class="card" id="quizCard"></div>
+
+    <div class="toolbar">
+      <span id="shuffleBtn">🔀 Sega küsimused</span>
+      <span id="resetBtn">↺ Nulli statistika</span>
+    </div>
+  `;
+  document.getElementById('backLink').addEventListener('click', renderDeckSelector);
+  document.getElementById('shuffleBtn').addEventListener('click', () => {
+    order = shuffle(DECKS[currentDeckKey].data.map((_, i) => i));
+    fullRestart();
+  });
+  document.getElementById('resetBtn').addEventListener('click', fullRestart);
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function computeStats() {
+  let answered = 0, correctCount = 0, wrongCount = 0;
+  for (const s of states) {
+    if (s.judged) {
+      answered++;
+      if (s.correct) correctCount++; else wrongCount++;
+    }
+  }
+  return { answered, correctCount, wrongCount };
+}
+
+function updateStats() {
+  const deck = DECKS[currentDeckKey];
+  const { answered, correctCount, wrongCount } = computeStats();
+  document.getElementById('statTotal').textContent = deck.data.length;
+  document.getElementById('statAnswered').textContent = answered;
+  const correctPct = answered > 0 ? Math.round((correctCount / answered) * 100) : 0;
+  const wrongPct = answered > 0 ? Math.round((wrongCount / answered) * 100) : 0;
+  document.getElementById('statCorrectPct').textContent = correctPct + '%';
+  document.getElementById('statWrongPct').textContent = wrongPct + '%';
+  document.getElementById('progressFill').style.width = (Math.min(current, order.length) / order.length * 100) + '%';
+}
+
+function renderCard() {
+  const quizCard = document.getElementById('quizCard');
+  const deck = DECKS[currentDeckKey];
+  const item = deck.data[order[current]];
+  const st = states[current];
+
+  quizCard.innerHTML = `
+    <div class="q-number">
+      <span id="qNumber">Küsimus ${current + 1} / ${order.length}</span>
+      <span class="q-badge hidden" id="qBadge"></span>
+    </div>
+    <div class="question" id="questionText"></div>
+    <div class="answer-box" id="answerBox">
+      <div class="answer-label">Õige vastus</div>
+      <div id="answerText"></div>
+    </div>
+    <div class="buttons" id="buttonsRow">
+      <button class="btn-show" id="showBtn">Näita vastust</button>
+    </div>
+    <div class="buttons hidden" id="judgeRow">
+      <button class="btn-correct" id="correctBtn">✓ Vastasin õigesti</button>
+      <button class="btn-wrong" id="wrongBtn">✗ Vastasin valesti</button>
+    </div>
+    <div class="nav-row">
+      <button class="btn-nav" id="prevBtn">← Eelmine</button>
+      <button class="btn-nav" id="nextNavBtn">Järgmine →</button>
+    </div>
+  `;
+
+  document.getElementById('questionText').textContent = item.q;
+  document.getElementById('answerText').textContent = item.a;
+
+  const badge = document.getElementById('qBadge');
+  const aBox = document.getElementById('answerBox');
+  const bRow = document.getElementById('buttonsRow');
+  const jRow = document.getElementById('judgeRow');
+
+  if (st.judged) {
+    aBox.classList.add('visible');
+    bRow.classList.add('hidden');
+    jRow.classList.add('hidden');
+    badge.classList.remove('hidden');
+    badge.textContent = st.correct ? 'Õige' : 'Vale';
+    badge.className = 'q-badge ' + (st.correct ? 'ok' : 'no');
+  } else if (st.revealed) {
+    aBox.classList.add('visible');
+    bRow.classList.add('hidden');
+    jRow.classList.remove('hidden');
+    badge.classList.add('hidden');
+  } else {
+    aBox.classList.remove('visible');
+    bRow.classList.remove('hidden');
+    jRow.classList.add('hidden');
+    badge.classList.add('hidden');
+  }
+
+  document.getElementById('prevBtn').disabled = (current === 0);
+
+  document.getElementById('showBtn').onclick = () => {
+    states[current].revealed = true;
+    renderCard();
+  };
+  document.getElementById('correctBtn').onclick = () => {
+    states[current].judged = true;
+    states[current].correct = true;
+    goToNextOrEnd();
+  };
+  document.getElementById('wrongBtn').onclick = () => {
+    states[current].judged = true;
+    states[current].correct = false;
+    goToNextOrEnd();
+  };
+  document.getElementById('prevBtn').onclick = () => {
+    if (current > 0) { current--; renderCard(); }
+  };
+  document.getElementById('nextNavBtn').onclick = () => {
+    if (current < order.length - 1) { current++; renderCard(); }
+    else { goToNextOrEnd(); }
+  };
+
+  updateStats();
+}
+
+function goToNextOrEnd() {
+  if (current < order.length - 1) {
+    current++;
+    renderCard();
+  } else {
+    showEndScreen();
+  }
+}
+
+function showEndScreen() {
+  document.getElementById('progressFill').style.width = '100%';
+  const { answered, correctCount, wrongCount } = computeStats();
+  const pct = answered > 0 ? Math.round((correctCount / answered) * 100) : 0;
+  const quizCard = document.getElementById('quizCard');
+  quizCard.innerHTML = `
+    <div class="end-screen">
+      <div class="q-number" style="justify-content:center;">Kordamine läbitud!</div>
+      <div>Vastatud küsimusi: ${answered} / ${order.length}</div>
+      <div class="big-pct">${pct}%</div>
+      <div>õigeid vastuseid (${correctCount} õiget, ${wrongCount} valet)</div>
+      <div class="footer-buttons">
+        <button id="reviewBtn">Vaata küsimusi uuesti</button>
+        <button id="restartBtn">Alusta täiesti algusest</button>
+        <button id="deckBtn">Vali teine õppekeskkond</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('reviewBtn').addEventListener('click', () => {
+    current = 0;
+    renderCard();
+  });
+  document.getElementById('restartBtn').addEventListener('click', fullRestart);
+  document.getElementById('deckBtn').addEventListener('click', renderDeckSelector);
+}
+
+function fullRestart() {
+  states = order.map(() => ({ judged: false, correct: null, revealed: false }));
+  current = 0;
+  renderCard();
+}
+
+renderDeckSelector();
+</script>
+</body>
+</html>
