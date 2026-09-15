@@ -91,6 +91,334 @@
   .nav-row { display: flex; gap: 10px; margin-top: 12px; }
   .back-link { display: inline-block; margin-bottom: 12px; color: var(--muted); cursor: pointer; font-size: 0.85rem; text-decoration: underline; }
 </style>
+
+<style id="tehnikatuvastus-theme">
+:root{
+  --bg:#11160d;
+  --card:#171d12;
+  --accent:#c7b968;
+  --green:#91a654;
+  --red:#a86d58;
+  --text:#d4d0b5;
+  --muted:#777b63;
+  --line:#343a29;
+  --panel:#1b2116;
+}
+*{box-sizing:border-box}
+body{
+  background:
+    radial-gradient(circle at 28% 0%, rgba(126,139,68,.08), transparent 34%),
+    linear-gradient(180deg,#11160d 0%,#10150c 100%) !important;
+  color:var(--text)!important;
+  font-family:"Courier New",Consolas,monospace!important;
+  letter-spacing:.01em;
+}
+.app{max-width:760px!important}
+h1{
+  color:var(--accent)!important;
+  text-align:left!important;
+  font-family:Impact,"Arial Narrow",sans-serif!important;
+  font-size:2rem!important;
+  letter-spacing:.025em!important;
+  text-transform:uppercase;
+  padding-bottom:13px;
+  margin-bottom:8px!important;
+  border-bottom:1px solid var(--line);
+}
+.subtitle{
+  text-align:left!important;
+  color:var(--muted)!important;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  font-size:.68rem!important;
+  margin-bottom:18px!important;
+}
+.deck-list{gap:8px!important}
+.deck-card{
+  background:rgba(24,30,18,.92)!important;
+  border:1px solid var(--line)!important;
+  border-radius:0!important;
+  padding:17px 18px!important;
+  box-shadow:none!important;
+}
+.deck-card:hover{
+  border-color:#697347!important;
+  background:#1d2417!important;
+  transform:none!important;
+}
+.deck-card h2{
+  color:#c8c4a8!important;
+  font-size:.98rem!important;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+.deck-card p{
+  color:var(--muted)!important;
+  font-size:.72rem!important;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+.deck-card .arrow{color:#737b4b!important}
+.stats{
+  background:rgba(24,30,18,.92)!important;
+  border:1px solid var(--line)!important;
+  border-radius:0!important;
+  padding:10px 14px!important;
+  box-shadow:none!important;
+}
+.stat .num{font-size:1.1rem!important;color:#a9b469}
+.stat .label{
+  color:#777b63!important;
+  font-size:.6rem!important;
+  letter-spacing:.14em!important;
+}
+.stat.correct .num{color:#9eaf60!important}
+.stat.wrong .num{color:#b97b61!important}
+.progress-bar{
+  height:3px!important;
+  background:#252b1d!important;
+  border-radius:0!important;
+  margin-bottom:14px!important;
+}
+.progress-fill{background:#87954f!important}
+.card{
+  background:rgba(23,29,18,.96)!important;
+  border:1px solid var(--line)!important;
+  border-radius:0!important;
+  padding:20px!important;
+  box-shadow:none!important;
+  min-height:250px!important;
+}
+.q-number{
+  color:#7f845f!important;
+  font-size:.68rem!important;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  padding-bottom:9px;
+  border-bottom:1px solid #2c3224;
+}
+.q-badge{
+  border-radius:0!important;
+  border:1px solid currentColor;
+  background:transparent!important;
+}
+.question{
+  color:#d3cfb2!important;
+  font-size:1.04rem!important;
+  line-height:1.55!important;
+  font-weight:600!important;
+  padding-top:10px;
+}
+.card img{
+  border-radius:0!important;
+  border:1px solid #454b35!important;
+  background:#e7e6dc;
+  padding:4px;
+  box-shadow:none!important;
+}
+.answer-box{
+  background:#10150d!important;
+  border:1px solid #3b422d!important;
+  border-left:3px solid #8d9952!important;
+  border-radius:0!important;
+  color:#d2ceb1!important;
+}
+.answer-label{
+  color:#9eaa60!important;
+  font-size:.66rem!important;
+  letter-spacing:.14em!important;
+}
+.buttons{gap:8px!important}
+button{
+  border:1px solid #3a402d!important;
+  border-radius:0!important;
+  background:#1b2116;
+  color:#b8b69d;
+  font-family:"Courier New",Consolas,monospace!important;
+  font-size:.72rem!important;
+  font-weight:700!important;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  box-shadow:none!important;
+}
+button:hover:not(:disabled){
+  border-color:#697347!important;
+  background:#22291a!important;
+}
+.btn-show{
+  background:#899453!important;
+  color:#171b10!important;
+  border-color:#9ca761!important;
+}
+.btn-correct{
+  background:#718244!important;
+  color:#11150d!important;
+  border-color:#879b50!important;
+}
+.btn-wrong{
+  background:#6d4538!important;
+  color:#ddd1b5!important;
+  border-color:#875847!important;
+}
+.btn-nav{
+  background:#191f14!important;
+  color:#858a70!important;
+}
+.footer-buttons button{
+  background:#899453!important;
+  color:#171b10!important;
+}
+.end-screen .big-pct{color:#a7b363!important}
+.toolbar,.back-link{color:#747962!important}
+.back-link{
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  text-decoration:none!important;
+}
+.nav-row{gap:8px!important}
+@media(max-width:640px){
+  h1{font-size:1.55rem!important}
+  .app{max-width:100%!important}
+  .card{padding:15px!important}
+}
+</style>
+
+
+<style id="tehnikatuvastus-font-fix">
+body, button, input, textarea, select,
+.deck-card, .card, .answer-box, .stats {
+  font-family: "Courier New", Courier, monospace !important;
+  font-weight: 400 !important;
+}
+h1 {
+  font-family: "Arial Narrow", "Roboto Condensed", Arial, sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: .015em !important;
+}
+.deck-card h2,
+.question {
+  font-family: "Arial Narrow", Arial, sans-serif !important;
+  font-weight: 500 !important;
+  letter-spacing: .02em !important;
+}
+button {
+  font-weight: 400 !important;
+  letter-spacing: .08em !important;
+}
+.q-number, .answer-label, .stat .label, .subtitle, .deck-card p {
+  font-weight: 400 !important;
+}
+</style>
+
+
+<style id="responsive-wide-layout">
+/* Desktop: kasuta ekraanipinda märksa paremini */
+.app{
+  width:min(94vw,1180px)!important;
+  max-width:1180px!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+.card{
+  width:100%!important;
+  min-height:340px!important;
+  padding:clamp(20px,2.4vw,34px)!important;
+}
+.question{
+  font-size:clamp(1.05rem,1.35vw,1.3rem)!important;
+  max-width:100%!important;
+}
+.answer-box{
+  padding:clamp(15px,2vw,24px)!important;
+  font-size:clamp(.95rem,1.15vw,1.1rem)!important;
+}
+.card img{
+  display:block!important;
+  width:auto!important;
+  max-width:min(100%,760px)!important;
+  max-height:52vh!important;
+  object-fit:contain!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+.deck-list{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:12px!important;
+}
+.deck-card{min-height:105px!important}
+.buttons button,.nav-row button{
+  min-height:46px!important;
+  padding:12px 18px!important;
+}
+.stats{width:100%!important}
+
+/* Suur desktop */
+@media (min-width:1400px){
+  .app{
+    width:min(88vw,1320px)!important;
+    max-width:1320px!important;
+  }
+  .card{min-height:390px!important}
+  .card img{
+    max-width:880px!important;
+    max-height:58vh!important;
+  }
+}
+
+/* Mobiil: üks veerg, suured puutealad, ilma horisontaalse kerimiseta */
+@media (max-width:700px){
+  body{padding:12px!important}
+  .app{
+    width:100%!important;
+    max-width:none!important;
+  }
+  h1{font-size:1.5rem!important}
+  .deck-list{
+    grid-template-columns:1fr!important;
+    gap:8px!important;
+  }
+  .deck-card{
+    min-height:auto!important;
+    padding:14px!important;
+  }
+  .card{
+    min-height:0!important;
+    padding:14px!important;
+  }
+  .question{
+    font-size:1rem!important;
+    line-height:1.5!important;
+  }
+  .card img{
+    max-width:100%!important;
+    max-height:44vh!important;
+  }
+  .buttons,.nav-row{
+    gap:7px!important;
+  }
+  .buttons button,.nav-row button{
+    min-height:48px!important;
+    padding:11px 10px!important;
+    font-size:.7rem!important;
+  }
+  .stats{
+    padding:8px!important;
+  }
+}
+
+/* Väga kitsas telefon */
+@media (max-width:420px){
+  body{padding:8px!important}
+  .card{padding:11px!important}
+  .buttons{
+    flex-wrap:wrap!important;
+  }
+  .buttons button{
+    flex:1 1 100%!important;
+  }
+}
+</style>
+
 </head>
 <body>
 <div class="app" id="app">
